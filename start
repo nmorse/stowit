@@ -1,0 +1,1 @@
+nodemon --delay 3 ./server/main.js 8098 1>logs/out.log 2>logs/err.log &
