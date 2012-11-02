@@ -45,8 +45,9 @@ app.listen(process.argv[2]);
 
 // services...
 // get...
-// usage domain/catalyst?finder={"some_property":{"$eq":"some_value"}}&size=10
-app.get('/catalyst', function (req, res) {
+// usage domain/?finder={"some_property":{"$eq":"some_value"}}&size=10
+// usage domain/?envelope={"intent":"update","_id":"0123456789abcdef","content":{"prop":"value"}}&return_as={"format":"JSONP"}
+app.get('/', function (req, res) {
     var req_finder = req.query.finder || '{}';
     var finder = JSON.parse(req_finder);
     var req_size = req.query.size || '1';
@@ -58,15 +59,18 @@ app.get('/catalyst', function (req, res) {
     if (finder._id && finder._id.length == 24) {
         finder._id = new Oid(finder._id);
     }
-    if (req_count !== '') {
+    if (req_count === '') {
         db('ac.catalyst').find(size, finder, function (reply) {
+            var callback = "callback";
             if (return_as.format == "JSON") {
                 res.contentType('application/json; charset=utf-8');
                 res.send(reply);
             }
             if (return_as.format == "JSONP") {
+                if (req.query.callback) {
+                    callback = req.query.callback;
                 res.contentType('application/javascript; charset=utf-8');
-                res.send("callback("+reply+");");
+                res.send(callback + "(" + reply + ");");
             }
         });
     }
@@ -85,8 +89,8 @@ app.get('/catalyst', function (req, res) {
 });
 
 // post... 
-// usage domain/catalyst/ POST:json={"intent":"insert", "content":{"prop":"value"}}
-app.post('/catalyst', function (req, res) {
+// usage domain/ POST Data:json={"intent":"insert", "content":{"prop":"value"}}
+app.post('/', function (req, res) {
     var envelope = JSON.parse(req.body.json);
     var content = envelope.content;
     var _id;
